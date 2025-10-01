@@ -1,59 +1,74 @@
 import csv
+from enum import nonmember
+
 
 def carica_da_file(file_path):
     """Carica i libri dal file"""
-    biblioteca = {}
-    libri = []
+    try:
+        biblioteca = {}
 
-    with open(file_path, "r", encoding="utf-8") as file:
-        reader = csv.reader(file)
-        sections = next(reader)
+        with open(file_path, "r", encoding="utf-8") as file:
+            reader = csv.reader(file)
+            next(reader)
 
-        for row in reader:
-            libri.append(row)
+            for row in reader:
+                titolo = row[0]
+                autore = row[1]
+                anno = int(row[2])
+                pagine = int(row[3])
+                sezione = row[4]
 
-    for libro in libri:
-        if libro[-1] not in biblioteca:
-            biblioteca[libro[-1]] = []
-            biblioteca[libro[-1]].append(libro)
-        else:
-            biblioteca[libro[-1]].append(libro)
+                biblioteca[titolo] = { "Autore" : autore, "Anno" : anno, "Pagine" : pagine, "Sezione" : sezione}
 
-    return biblioteca
+        return biblioteca
+
+    except FileNotFoundError:
+        print("File non trovato")
+        return None
 
 
 def aggiungi_libro(biblioteca, titolo, autore, anno, pagine, sezione, file_path):
     """Aggiunge un libro nella biblioteca"""
-    libro = [titolo, autore, anno, pagine, sezione]
-    biblioteca[sezione].append(libro)
+    if titolo in biblioteca:
+        return None
 
-    with open(file_path, "a", encoding="utf-8") as file:
+    libro = { "Autore" : autore, "Anno" : anno, "Pagine" : pagine, "Sezione" : sezione}
+    biblioteca[titolo] = libro
+
+    with open(file_path, "a", encoding="utf-8", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow("titolo", "autore", "anno", "pagine", "sezione")
+
+        writer.writerow([titolo, autore, anno, pagine, sezione])
 
     return libro
 
 
+
 def cerca_libro(biblioteca, titolo):
     """Cerca un libro nella biblioteca dato il titolo"""
-    trovato = False
-
-    for sezione in biblioteca:
-        for libro in sezione:
-            if libro[0] == titolo:
-                risultato = libro
-                trovato = True
-
-    return trovato
+    return biblioteca.get(titolo)
 
 
 def elenco_libri_sezione_per_titolo(biblioteca, sezione):
     """Ordina i titoli di una data sezione della biblioteca in ordine alfabetico"""
-    # TODO1
+
+    sezione = str(sezione)
+
+    titoli = []
+    for titolo, info in biblioteca.items():
+        if info["Sezione"] == sezione:
+            titoli.append(titolo)
+
+    if not titoli:
+        return None
+
+    titoli_ordinati = sorted(titoli)
+
+    return titoli_ordinati
 
 
 def main():
-    biblioteca = []
+    biblioteca = {}
     file_path = "biblioteca.csv"
 
     while True:
@@ -121,6 +136,8 @@ def main():
             if titoli is not None:
                 print(f'\nSezione {sezione} ordinata:')
                 print("\n".join([f"- {titolo}" for titolo in titoli]))
+            else:
+                print("La sezione inserita non e' presente all'interno della biblioteca.")
 
         elif scelta == "5":
             print("Uscita dal programma...")
